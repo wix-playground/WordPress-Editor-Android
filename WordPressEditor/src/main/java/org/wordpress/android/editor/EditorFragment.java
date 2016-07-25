@@ -1376,10 +1376,22 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
             mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_title').disableEditing();");
             mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_content').disableEditing();");
             mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_content').focus();");
-            InputMethodManager imm = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-            imm.hideSoftInputFromWindow(mWebView.getWindowToken(), 0);
-            mIsKeyboardOpen = false;
+            dismissKeyboard();
             updateFormatBarEnabledState(false);
+        }
+    }
+
+    public void dismissKeyboard() {
+        InputMethodManager imm = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(mWebView.getWindowToken(), 0);
+        mIsKeyboardOpen = false;
+    }
+
+    public void showKeyboardIfEditing() {
+        if(!mIsKeyboardOpen && mEditable) {
+            InputMethodManager imm = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.showSoftInput(mWebView, 0);
+            mIsKeyboardOpen = true;
         }
     }
 }
