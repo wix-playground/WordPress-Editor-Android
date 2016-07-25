@@ -109,8 +109,9 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
 
     private long mActionStartedAt = -1;
 
-    public static EditorFragment newInstance(String title, String content) {
+    public static EditorFragment newInstance(EditorFragmentListener listener, String title, String content) {
         EditorFragment fragment = new EditorFragment();
+        fragment.setEditorFragmentListener(listener);
         Bundle args = new Bundle();
         args.putString(ARG_PARAM_TITLE, title);
         args.putString(ARG_PARAM_CONTENT, content);

@@ -56,14 +56,8 @@ public abstract class EditorFragmentAbstract extends Fragment {
 
     protected HashMap<String, String> mCustomHttpHeaders;
 
-    @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
-        try {
-            mEditorFragmentListener = (EditorFragmentListener) activity;
-        } catch (ClassCastException e) {
-            throw new ClassCastException(activity.toString() + " must implement EditorFragmentListener");
-        }
+    public void setEditorFragmentListener(EditorFragmentListener mEditorFragmentListener) {
+        this.mEditorFragmentListener = mEditorFragmentListener;
     }
 
     @Override
