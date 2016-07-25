@@ -1167,11 +1167,6 @@ public class LegacyEditorFragment extends EditorFragmentAbstract implements Text
     }
 
     @Override
-    public boolean isUploadingMedia() {
-        return false;
-    }
-
-    @Override
     public boolean hasFailedMediaUploads() {
         return false;
     }

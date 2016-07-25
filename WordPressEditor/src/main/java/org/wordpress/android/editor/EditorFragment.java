@@ -28,6 +28,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.webkit.URLUtil;
 import android.webkit.WebView;
 import android.widget.RelativeLayout.LayoutParams;
+import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.android.volley.toolbox.ImageLoader;
@@ -63,6 +64,7 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
     private static final String KEY_TITLE = "title";
     private static final String KEY_CONTENT = "content";
     private static final String KEY_SHOW_HTML = "showHtml";
+    private static final String KEY_EDITABLE = "editable";
 
     private static final String TAG_FORMAT_BAR_BUTTON_MEDIA = "media";
     private static final String TAG_FORMAT_BAR_BUTTON_LINK = "link";
@@ -74,6 +76,7 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
     private String mTitle = "";
     private String mContentHtml = "";
     private boolean mShowHtmlButton = true;
+    private boolean mEditable = true;
 
     private EditorWebViewAbstract mWebView;
     private View mSourceView;
@@ -94,9 +97,7 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
 
     private ConcurrentHashMap<String, MediaFile> mWaitingMediaFiles;
     private Set<MediaGallery> mWaitingGalleries;
-    private Map<String, MediaType> mUploadingMedia;
     private Set<String> mFailedMediaIds;
-    private MediaGallery mUploadingMediaGallery;
 
     private String mJavaScriptResult = "";
 
@@ -137,7 +138,6 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
 
         mWaitingMediaFiles = new ConcurrentHashMap<>();
         mWaitingGalleries = Collections.newSetFromMap(new ConcurrentHashMap<MediaGallery, Boolean>());
-        mUploadingMedia = new HashMap<>();
         mFailedMediaIds = new HashSet<>();
 
         // -- WebView configuration
@@ -187,6 +187,7 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
             setTitle(savedInstanceState.getCharSequence(KEY_TITLE));
             setContent(savedInstanceState.getCharSequence(KEY_CONTENT));
             mShowHtmlButton = savedInstanceState.getBoolean(KEY_SHOW_HTML);
+            mEditable = savedInstanceState.getBoolean(KEY_EDITABLE);
         } else {
             if(getArguments() != null && getArguments().containsKey(ARG_PARAM_TITLE)) {
                 setTitle(getArguments().getCharSequence(ARG_PARAM_TITLE));
@@ -246,18 +247,10 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
                 && (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE)
                 && !getResources().getBoolean(R.bool.is_large_tablet_landscape)) {
             mIsKeyboardOpen = true;
+            updateEditable();
             mHideActionBarOnSoftKeyboardUp = true;
             hideActionBarIfNeeded();
         }
-    }
-
-    @Override
-    public void onDetach() {
-        // Soft cancel (delete flag off) all media uploads currently in progress
-        for (String mediaId : mUploadingMedia.keySet()) {
-            mEditorFragmentListener.onMediaUploadCancelClicked(mediaId, false);
-        }
-        super.onDetach();
     }
 
     @Override
@@ -272,6 +265,8 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
     public void onSaveInstanceState(Bundle outState) {
         outState.putCharSequence(KEY_TITLE, getTitle());
         outState.putCharSequence(KEY_CONTENT, getContent());
+        outState.putBoolean(KEY_SHOW_HTML, mShowHtmlButton);
+        outState.putBoolean(KEY_EDITABLE, mEditable);
     }
 
     private ActionBar getActionBar() {
@@ -482,13 +477,6 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
 
         mEditorFragmentListener.onTrackableEvent(TrackableEvent.HTML_BUTTON_TAPPED);
 
-        // Don't switch to HTML mode if currently uploading media
-        if (!mUploadingMedia.isEmpty() || isActionInProgress()) {
-            toggleButton.setChecked(false);
-            ToastUtils.showToast(getActivity(), R.string.alert_action_while_uploading, ToastUtils.Duration.LONG);
-            return;
-        }
-
         clearFormatBarButtons();
         updateFormatBarEnabledState(true);
 
@@ -652,7 +640,8 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
         if (event.getAction() == MotionEvent.ACTION_UP) {
             // If the WebView or EditText has received a touch event, the keyboard will be displayed and the action bar
             // should hide
-            mIsKeyboardOpen = true;
+            mIsKeyboardOpen = mEditable;
+            Log.d("EDITOR", "onTouch sets mIsKeyboardOpen to: " + mIsKeyboardOpen);
             hideActionBarIfNeeded();
         }
         return false;
@@ -888,17 +877,7 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
                     }
                     mActionStartedAt = System.currentTimeMillis();
                 } else {
-                    String id = mediaFile.getMediaId();
-                    if (mediaFile.isVideo()) {
-                        String posterUrl = Utils.escapeQuotes(StringUtils.notNullStr(mediaFile.getThumbnailURL()));
-                        mWebView.execJavaScriptFromString("ZSSEditor.insertLocalVideo(" + id + ", '" + posterUrl +
-                                "');");
-                        mUploadingMedia.put(id, MediaType.VIDEO);
-                    } else {
-                        mWebView.execJavaScriptFromString("ZSSEditor.insertLocalImage(" + id + ", '" + safeMediaUrl +
-                                "');");
-                        mUploadingMedia.put(id, MediaType.IMAGE);
-                    }
+                    Toast.makeText(getActivity(), "Added a local file! Uploading not supported here", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -914,12 +893,12 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
         }
 
         if (mediaGallery.getIds().isEmpty()) {
-            mUploadingMediaGallery = mediaGallery;
-            mWebView.execJavaScriptFromString("ZSSEditor.insertLocalGallery('" + mediaGallery.getUniqueId() + "');");
-        } else {
+        } else  {
             // Ensure that the content field is in focus (it may not be if we're adding a gallery to a new post by a
             // share action and not via the format bar button)
-            mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_content').focus();");
+            if (mEditable) {
+                mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_content').focus();");
+            }
 
             mWebView.execJavaScriptFromString("ZSSEditor.insertGallery('" + mediaGallery.getIdsStr() + "', '" +
                     mediaGallery.getType() + "', " + mediaGallery.getNumColumns() + ");");
@@ -935,11 +914,6 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
                         Utils.escapeQuotes(videoUrl) + "', '" + Utils.escapeQuotes(posterUrl) + "');");
             }
         });
-    }
-
-    @Override
-    public boolean isUploadingMedia() {
-        return (mUploadingMedia.size() > 0);
     }
 
     @Override
@@ -985,6 +959,9 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
                 mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_content').setPlaceholderText('" +
                         Utils.escapeQuotes(mContentPlaceholder) + "');");
 
+
+                updateEditable();
+
                 // Load title and content into ZSSEditor
                 updateVisualEditorFields();
 
@@ -1011,8 +988,10 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
                 if (mWaitingMediaFiles.size() > 0) {
                     // Image insertion will only work if the content field is in focus
                     // (for a new post, no field is in focus until user action)
-                    mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_content').focus();");
-                    editorHasFocus = true;
+                    if (mEditable) {
+                        mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_content').focus();");
+                        editorHasFocus = true;
+                    }
 
                     for (Map.Entry<String, MediaFile> entry : mWaitingMediaFiles.entrySet()) {
                         appendMediaFile(entry.getValue(), entry.getKey(), null);
@@ -1024,8 +1003,10 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
                 if (mWaitingGalleries.size() > 0) {
                     // Gallery insertion will only work if the content field is in focus
                     // (for a new post, no field is in focus until user action)
-                    mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_content').focus();");
-                    editorHasFocus = true;
+                    if (mEditable) {
+                        mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_content').focus();");
+                        editorHasFocus = true;
+                    }
 
                     for (MediaGallery mediaGallery : mWaitingGalleries) {
                         appendGallery(mediaGallery);
@@ -1034,7 +1015,7 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
                     mWaitingGalleries.clear();
                 }
 
-                if (!editorHasFocus) {
+                if (!editorHasFocus && mEditable) {
                     mWebView.execJavaScriptFromString("ZSSEditor.focusFirstEditableField();");
                 }
 
@@ -1086,59 +1067,7 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
 
         switch (uploadStatus) {
             case "uploading":
-                // Display 'cancel upload' dialog
-                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-                builder.setTitle(getString(R.string.stop_upload_dialog_title));
-                builder.setPositiveButton(R.string.stop_upload_button, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        mEditorFragmentListener.onMediaUploadCancelClicked(mediaId, true);
-
-                        mWebView.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                switch (mediaType) {
-                                    case IMAGE:
-                                        mWebView.execJavaScriptFromString("ZSSEditor.removeImage(" + mediaId + ");");
-                                        break;
-                                    case VIDEO:
-                                        mWebView.execJavaScriptFromString("ZSSEditor.removeVideo(" + mediaId + ");");
-                                }
-                                mUploadingMedia.remove(mediaId);
-                            }
-                        });
-                        dialog.dismiss();
-                    }
-                });
-
-                builder.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        dialog.dismiss();
-                    }
-                });
-
-                AlertDialog dialog = builder.create();
-                dialog.show();
-                break;
             case "failed":
-                // Retry media upload
-                mEditorFragmentListener.onMediaRetryClicked(mediaId);
-
-                mWebView.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        switch (mediaType) {
-                            case IMAGE:
-                                mWebView.execJavaScriptFromString("ZSSEditor.unmarkImageUploadFailed(" + mediaId
-                                        + ");");
-                                break;
-                            case VIDEO:
-                                mWebView.execJavaScriptFromString("ZSSEditor.unmarkVideoUploadFailed(" + mediaId
-                                        + ");");
-                        }
-                        mFailedMediaIds.remove(mediaId);
-                        mUploadingMedia.put(mediaId, mediaType);
-                    }
-                });
                 break;
             default:
                 if (!mediaType.equals(MediaType.IMAGE)) {
@@ -1214,18 +1143,6 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
 
         linkDialogFragment.setArguments(dialogBundle);
         linkDialogFragment.show(getFragmentManager(), "LinkDialogFragment");
-    }
-
-    @Override
-    public void onMediaRemoved(String mediaId) {
-        mUploadingMedia.remove(mediaId);
-        mFailedMediaIds.remove(mediaId);
-        mEditorFragmentListener.onMediaUploadCancelClicked(mediaId, true);
-    }
-
-    @Override
-    public void onMediaReplaced(String mediaId) {
-        mUploadingMedia.remove(mediaId);
     }
 
     @Override
@@ -1432,5 +1349,35 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
     @Override
     public void onActionFinished() {
         mActionStartedAt = -1;
+    }
+
+    @Override
+    public void onMediaReplaced(String substring) {}
+
+    @Override
+    public void onMediaRemoved(String substring) {}
+
+
+    public void setEditable(boolean isEditing) {
+        mEditable = isEditing;
+        if(mWebView != null) {
+            updateEditable();
+        }
+    }
+
+    private void updateEditable() {
+        Log.d("EDITOR", "setEditable: " + mEditable + ", mIsKeyboardOpen: " + mIsKeyboardOpen);
+        if(mEditable) {
+            mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_title').enableEditing();");
+            mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_content').enableEditing();");
+        } else {
+            mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_title').disableEditing();");
+            mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_content').disableEditing();");
+            if(mIsKeyboardOpen) {
+                InputMethodManager imm = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(mWebView.getWindowToken(), 0);
+                mIsKeyboardOpen = false;
+            }
+        }
     }
 }
