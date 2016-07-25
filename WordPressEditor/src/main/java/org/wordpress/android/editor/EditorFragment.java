@@ -31,8 +31,6 @@ import android.widget.RelativeLayout.LayoutParams;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
-import com.android.volley.toolbox.ImageLoader;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.wordpress.android.editor.EditorWebViewAbstract.ErrorListener;
@@ -49,8 +47,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -95,8 +96,7 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
     private boolean mHideActionBarOnSoftKeyboardUp = false;
     private boolean mIsFormatBarDisabled = false;
 
-    private ConcurrentHashMap<String, MediaFile> mWaitingMediaFiles;
-    private Set<MediaGallery> mWaitingGalleries;
+    private Queue<String> mWaitingMediaFiles;
     private Set<String> mFailedMediaIds;
 
     private String mJavaScriptResult = "";
@@ -137,8 +137,7 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
             mHideActionBarOnSoftKeyboardUp = true;
         }
 
-        mWaitingMediaFiles = new ConcurrentHashMap<>();
-        mWaitingGalleries = Collections.newSetFromMap(new ConcurrentHashMap<MediaGallery, Boolean>());
+        mWaitingMediaFiles = new ConcurrentLinkedQueue<>();
         mFailedMediaIds = new HashSet<>();
 
         // -- WebView configuration
@@ -849,12 +848,11 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
         return StringUtils.notNullStr(mContentHtml);
     }
 
-    @Override
-    public void appendMediaFile(final MediaFile mediaFile, final String mediaUrl, ImageLoader imageLoader) {
+    public void appendMediaFile(final String mediaUrl) {
         if (!mDomHasLoaded) {
             // If the DOM hasn't loaded yet, we won't be able to add media to the ZSSEditor
             // Place them in a queue to be handled when the DOM loaded callback is received
-            mWaitingMediaFiles.put(mediaUrl, mediaFile);
+            mWaitingMediaFiles.add(mediaUrl);
             return;
         }
 
@@ -863,47 +861,10 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
         mWebView.post(new Runnable() {
             @Override
             public void run() {
-                if (URLUtil.isNetworkUrl(mediaUrl)) {
-                    String mediaId = mediaFile.getMediaId();
-                    if (mediaFile.isVideo()) {
-                        String posterUrl = Utils.escapeQuotes(StringUtils.notNullStr(mediaFile.getThumbnailURL()));
-                        String videoPressId = ShortcodeUtils.getVideoPressIdFromShortCode(
-                                mediaFile.getVideoPressShortCode());
-
-                        mWebView.execJavaScriptFromString("ZSSEditor.insertVideo('" + safeMediaUrl + "', '" +
-                                posterUrl + "', '" + videoPressId +  "');");
-                    } else {
-                        mWebView.execJavaScriptFromString("ZSSEditor.insertImage('" + safeMediaUrl + "', '" + mediaId +
-                                "');");
-                    }
-                    mActionStartedAt = System.currentTimeMillis();
-                } else {
-                    Toast.makeText(getActivity(), "Added a local file! Uploading not supported here", Toast.LENGTH_SHORT).show();
-                }
+                mWebView.execJavaScriptFromString("ZSSEditor.insertImage('" + safeMediaUrl + "', '" + mediaUrl.hashCode() + "');");
+                mActionStartedAt = System.currentTimeMillis();
             }
         });
-    }
-
-    @Override
-    public void appendGallery(MediaGallery mediaGallery) {
-        if (!mDomHasLoaded) {
-            // If the DOM hasn't loaded yet, we won't be able to add a gallery to the ZSSEditor
-            // Place it in a queue to be handled when the DOM loaded callback is received
-            mWaitingGalleries.add(mediaGallery);
-            return;
-        }
-
-        if (mediaGallery.getIds().isEmpty()) {
-        } else  {
-            // Ensure that the content field is in focus (it may not be if we're adding a gallery to a new post by a
-            // share action and not via the format bar button)
-            if (mEditable) {
-                mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_content').focus();");
-            }
-
-            mWebView.execJavaScriptFromString("ZSSEditor.insertGallery('" + mediaGallery.getIdsStr() + "', '" +
-                    mediaGallery.getType() + "', " + mediaGallery.getNumColumns() + ");");
-        }
     }
 
     @Override
@@ -994,27 +955,14 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
                         editorHasFocus = true;
                     }
 
-                    for (Map.Entry<String, MediaFile> entry : mWaitingMediaFiles.entrySet()) {
-                        appendMediaFile(entry.getValue(), entry.getKey(), null);
+                    for (String url : mWaitingMediaFiles) {
+                        appendMediaFile(url);
                     }
                     mWaitingMediaFiles.clear();
                 }
 
                 // Add any galleries that were placed in a queue due to the DOM not having loaded yet
-                if (mWaitingGalleries.size() > 0) {
-                    // Gallery insertion will only work if the content field is in focus
-                    // (for a new post, no field is in focus until user action)
-                    if (mEditable) {
-                        mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_content').focus();");
-                        editorHasFocus = true;
-                    }
 
-                    for (MediaGallery mediaGallery : mWaitingGalleries) {
-                        appendGallery(mediaGallery);
-                    }
-
-                    mWaitingGalleries.clear();
-                }
 
                 if (!editorHasFocus && mEditable) {
                     mWebView.execJavaScriptFromString("ZSSEditor.focusFirstEditableField();");

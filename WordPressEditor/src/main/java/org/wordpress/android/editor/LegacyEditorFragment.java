@@ -1118,12 +1118,10 @@ public class LegacyEditorFragment extends EditorFragmentAbstract implements Text
         addMediaFileTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
-    @Override
     public void appendMediaFile(final MediaFile mediaFile, final String imageUrl, final ImageLoader imageLoader) {
         addMediaFile(mediaFile, imageUrl, imageLoader, mContentEditText.getSelectionStart(), mContentEditText.getSelectionEnd());
     }
 
-    @Override
     public void appendGallery(MediaGallery mediaGallery) {
         Editable editableText = mContentEditText.getText();
         if (editableText == null) {
