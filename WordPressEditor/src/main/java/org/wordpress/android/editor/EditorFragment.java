@@ -1,5 +1,9 @@
 package org.wordpress.android.editor;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
@@ -27,9 +31,11 @@ import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.URLUtil;
 import android.webkit.WebView;
+import android.widget.FrameLayout;
 import android.widget.RelativeLayout.LayoutParams;
 import android.widget.Toast;
 import android.widget.ToggleButton;
+import android.widget.ViewAnimator;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -1141,7 +1147,7 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
         mWebView.setErrorListener(errorListener);
     }
 
-    private void updateVisualEditorFields() {
+    public void updateVisualEditorFields() {
         mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_title').setPlainText('" +
                 Utils.escapeHtml(mTitle) + "');");
         mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_content').setHTML('" +
@@ -1187,12 +1193,13 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
     }
 
     void updateFormatBarEnabledState(boolean enabled) {
-        float alpha = (enabled ? TOOLBAR_ALPHA_ENABLED : TOOLBAR_ALPHA_DISABLED);
-        for(ToggleButton button : mTagToggleButtonMap.values()) {
-            button.setEnabled(enabled);
-            button.setAlpha(alpha);
-        }
-
+        setToolbarVisibility(enabled, true);
+//        float alpha = (enabled ? TOOLBAR_ALPHA_ENABLED : TOOLBAR_ALPHA_DISABLED);
+//        for(ToggleButton button : mTagToggleButtonMap.values()) {
+//            button.setEnabled(enabled);
+//            button.setAlpha(alpha);
+//        }
+//
         mIsFormatBarDisabled = !enabled;
     }
 
@@ -1340,6 +1347,42 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
             InputMethodManager imm = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
             imm.showSoftInput(mWebView, 0);
             mIsKeyboardOpen = true;
+        }
+    }
+
+    public void hideToolbar(boolean animated) {
+        setToolbarVisibility(false, animated);
+    }
+
+    private void setToolbarVisibility(final boolean visible, boolean animated) {
+        final View formatBar = getView().findViewById(R.id.format_bar);
+        int fullHeight = (int) getResources().getDimension(R.dimen.format_bar_height);
+        if (formatBar != null) {
+
+
+            if ((visible && formatBar.getHeight() == fullHeight) || (!visible && formatBar.getHeight() == 0)) {
+                return;
+            }
+
+            if(!animated) {
+                ViewGroup.LayoutParams layoutParams = formatBar.getLayoutParams();
+                layoutParams.height= visible ? fullHeight : 0;
+                formatBar.setLayoutParams(layoutParams);
+            } else {
+                ValueAnimator anim = ValueAnimator.ofInt(
+                        visible ? 0 : fullHeight,
+                        visible ? fullHeight : 0);
+                anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener(){
+                    @Override
+                    public void onAnimationUpdate(ValueAnimator animation) {
+                        int val = (Integer) animation.getAnimatedValue();
+                        ViewGroup.LayoutParams layoutParams = formatBar.getLayoutParams();
+                        layoutParams.height= val;
+                        formatBar.setLayoutParams(layoutParams);
+                    }
+                });
+                anim.start();
+            }
         }
     }
 }
