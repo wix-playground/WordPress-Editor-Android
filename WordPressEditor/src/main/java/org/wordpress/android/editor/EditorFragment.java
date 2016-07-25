@@ -1052,7 +1052,7 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
                             updateFormatBarEnabledState(false);
                             break;
                         case "zss_field_content":
-                            updateFormatBarEnabledState(true);
+                            updateFormatBarEnabledState(mEditable);
                             break;
                     }
                 }
@@ -1370,14 +1370,15 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
         if(mEditable) {
             mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_title').enableEditing();");
             mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_content').enableEditing();");
+            updateFormatBarEnabledState(true);
         } else {
             mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_title').disableEditing();");
             mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_content').disableEditing();");
-            if(mIsKeyboardOpen) {
-                InputMethodManager imm = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-                imm.hideSoftInputFromWindow(mWebView.getWindowToken(), 0);
-                mIsKeyboardOpen = false;
-            }
+            mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_content').focus();");
+            InputMethodManager imm = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(mWebView.getWindowToken(), 0);
+            mIsKeyboardOpen = false;
+            updateFormatBarEnabledState(false);
         }
     }
 }
