@@ -96,7 +96,7 @@
         </LinearLayout>
 
         <View
-            android:id="@+id/format_bar_vertical_divider"
+            android:id="@+id/format_bar_button_html_divider"
             android:layout_width="@dimen/format_bar_vertical_divider_width"
             android:layout_height="@dimen/format_bar_vertical_divider_height"
             android:layout_gravity="center"
