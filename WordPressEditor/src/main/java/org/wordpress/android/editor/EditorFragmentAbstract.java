@@ -1,6 +1,5 @@
 package org.wordpress.android.editor;
 
-import android.app.Activity;
 import android.app.Fragment;
 import android.os.Bundle;
 import android.text.Spanned;
@@ -8,7 +7,6 @@ import android.text.Spanned;
 import com.android.volley.toolbox.ImageLoader;
 
 import org.wordpress.android.util.helpers.MediaFile;
-import org.wordpress.android.util.helpers.MediaGallery;
 
 import java.util.HashMap;
 
