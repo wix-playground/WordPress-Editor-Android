@@ -1339,10 +1339,6 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
         }
     }
 
-    public void hideToolbar(boolean animated) {
-        setToolbarVisibility(false, animated);
-    }
-
     private void setToolbarVisibility(final boolean visible, boolean animated) {
         final View formatBar = getView().findViewById(R.id.format_bar);
         int fullHeight = (int) getResources().getDimension(R.dimen.format_bar_height);
