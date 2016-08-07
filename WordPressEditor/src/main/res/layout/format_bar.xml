@@ -101,12 +101,6 @@
             </LinearLayout>
         </HorizontalScrollView>
 
-        <ImageView
-            android:id="@+id/format_bar_button_html_divider"
-            app:srcCompat="@drawable/format_bar_chevron"
-            android:background="@android:color/transparent"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
 
         <org.wordpress.android.editor.RippleToggleButton
             android:id="@+id/format_bar_button_html"
