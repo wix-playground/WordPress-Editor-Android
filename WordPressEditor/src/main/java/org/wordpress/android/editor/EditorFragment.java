@@ -1313,13 +1313,14 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
     private void updateEditable() {
         Log.d("EDITOR", "setEditable: " + mEditable + ", mIsKeyboardOpen: " + mIsKeyboardOpen);
         if(mEditable) {
+            mWebView.requestFocus();
             mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_title').enableEditing();");
             mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_content').enableEditing();");
+            mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_content').focus();");
             updateFormatBarEnabledState(true);
         } else {
             mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_title').disableEditing();");
             mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_content').disableEditing();");
-            mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_content').focus();");
             dismissKeyboard();
             updateFormatBarEnabledState(false);
         }
