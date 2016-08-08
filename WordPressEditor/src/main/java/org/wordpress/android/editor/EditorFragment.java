@@ -71,7 +71,7 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
     private String mTitle = "";
     private String mContentHtml = "";
     private boolean mShowHtmlButton = true;
-    private boolean mEditable = true;
+    private boolean mEditable = false;
 
     private EditorWebViewAbstract mWebView;
     private View mSourceView;
@@ -1317,6 +1317,7 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
             mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_title').enableEditing();");
             mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_content').enableEditing();");
             mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_content').focus();");
+            showKeyboardIfEditing();
             updateFormatBarEnabledState(true);
         } else {
             mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_title').disableEditing();");

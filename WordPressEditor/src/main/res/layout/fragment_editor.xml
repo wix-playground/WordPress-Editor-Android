@@ -4,6 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:background="@android:color/white"
     tools:context="org.wordpress.android.editor.EditorFragment">
 
     <include
@@ -41,8 +42,7 @@
                 android:textSize="24sp"
                 android:textColorHint="@color/sourceview_placeholder_text"
                 android:inputType="textCapSentences|textAutoCorrect"
-                android:imeOptions="flagNoExtractUi"
-                editor:fontFile="Merriweather-Bold.ttf"/>
+                android:imeOptions="flagNoExtractUi"/>
 
             <View
                 android:id="@+id/sourceview_horizontal_divider"

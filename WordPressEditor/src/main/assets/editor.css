@@ -1,28 +1,20 @@
 @font-face {
-    font-family: 'Merriweather';
-    src: local("Merriweather Light"),
-         url('fonts/Merriweather-Light.ttf');
+    font-family: 'Roboto';
     font-weight: normal;
     font-style: normal;
 }
 @font-face {
-    font-family: 'Merriweather';
-    src: local("Merriweather-Italic"),
-         url('fonts/Merriweather-Italic.ttf');
+    font-family: 'Roboto';
     font-weight: normal;
     font-style: italic;
 }
 @font-face {
-    font-family: 'Merriweather';
-    src: local("Merriweather-Bold"),
-         url('fonts/Merriweather-Bold.ttf');
+    font-family: 'Roboto';
     font-weight: bold;
     font-style: normal;
 }
 @font-face {
-    font-family: 'Merriweather';
-    src: local("Merriweather-BoldItalic"),
-         url('fonts/Merriweather-BoldItalic.ttf');
+    font-family: 'Roboto';
     font-weight: bold;
     font-style: italic;
 }
@@ -39,7 +31,7 @@ html {
 
 html, body {
     margin:0;
-    font-family:'Merriweather', sans-serif;
+    font-family:'Roboto', sans-serif;
     font-size:1em;
     color:#2D2D2D;
 }
@@ -408,10 +400,10 @@ div.field[placeholderText][contenteditable=true]:empty:focus:before {
 }
 
 #zss_field_title, #zss_field_title p {
-    font-family:'Merriweather', serif;
-    font-weight: bold;
-    font-size: 24px;
-    line-height: 32px;
+    font-family:'Roboto';
+    font-weight: light;
+    font-size: 28px;
+    line-height: 36px;
     margin-bottom: 0px;
 }
 
