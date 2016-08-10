@@ -2,7 +2,6 @@ package org.wordpress.android.editor;
 
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Context;
@@ -10,6 +9,7 @@ import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -22,6 +22,7 @@ import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -29,6 +30,8 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebView;
+import android.widget.FrameLayout;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout.LayoutParams;
 import android.widget.ToggleButton;
 
@@ -103,6 +106,9 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
     private final Map<String, ToggleButton> mTagToggleButtonMap = new HashMap<>();
 
     private long mActionStartedAt = -1;
+    private FrameLayout frame;
+    private View view;
+    private ProgressBar loader;
 
     public static EditorFragment newInstance(EditorFragmentListener listener, String title, String content) {
         EditorFragment fragment = new EditorFragment();
@@ -124,7 +130,19 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_editor, container, false);
+        frame = new FrameLayout(getActivity().getBaseContext());
+        view = inflater.inflate(R.layout.fragment_editor, null, false);
+        loader = new ProgressBar(getActivity().getBaseContext(), null, android.R.attr.progressBarStyleLarge);
+
+        loader.setIndeterminate(true);
+        frame.setBackgroundColor(Color.WHITE);
+
+        loader.getIndeterminateDrawable().setColorFilter(0xFF00ADF5,android.graphics.PorterDuff.Mode.MULTIPLY);
+
+
+        frame.addView(loader, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
+        frame.addView(view, LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+        view.setVisibility(View.INVISIBLE);
 
         // Setup hiding the action bar when the soft keyboard is displayed for narrow viewports
         if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE
@@ -236,7 +254,7 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
 
         setupFormatBarButtonMap(view);
 
-        return view;
+        return frame;
     }
 
     @Override
@@ -915,11 +933,15 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
 
     public void onDomLoaded() {
 
+
         mWebView.post(new Runnable() {
             public void run() {
                 if (!isAdded()) {
                     return;
                 }
+
+                loader.setVisibility(View.GONE);
+                view.setVisibility(View.VISIBLE);
 
                 mDomHasLoaded = true;
 
