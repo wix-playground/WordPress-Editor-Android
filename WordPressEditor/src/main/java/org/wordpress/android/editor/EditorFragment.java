@@ -2,6 +2,7 @@ package org.wordpress.android.editor;
 
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Context;
@@ -151,6 +152,20 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
         mWebView.setOnTouchListener(this);
         mWebView.setOnImeBackListener(this);
         mWebView.setAuthHeaderRequestListener(this);
+
+        mWebView.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (hasFocus) {
+                    ((InputMethodManager) v.getContext().getSystemService(Context.INPUT_METHOD_SERVICE)).showSoftInput(mWebView, InputMethodManager.SHOW_FORCED);
+                    mIsKeyboardOpen = true;
+                } else {
+                    // Close keyboard
+                    ((InputMethodManager) v.getContext().getSystemService(Context.INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(mWebView.getWindowToken(), 0);
+                    mIsKeyboardOpen = false;
+                }
+            }
+        });
 
         if (mCustomHttpHeaders != null && mCustomHttpHeaders.size() > 0) {
             for (Map.Entry<String, String> entry : mCustomHttpHeaders.entrySet()) {
@@ -1312,19 +1327,28 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
 
     private void updateEditable() {
         Log.d("EDITOR", "setEditable: " + mEditable + ", mIsKeyboardOpen: " + mIsKeyboardOpen);
-        if(mEditable) {
-            mWebView.requestFocus();
-            mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_title').enableEditing();");
-            mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_content').enableEditing();");
-            mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_content').focus();");
-            showKeyboardIfEditing();
-            updateFormatBarEnabledState(true);
-        } else {
-            mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_title').disableEditing();");
-            mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_content').disableEditing();");
-            dismissKeyboard();
-            updateFormatBarEnabledState(false);
-        }
+        mWebView.post(new Runnable() {
+            @Override
+            public void run() {
+                if(mEditable) {
+                    mWebView.setFocusableInTouchMode(true);
+                    mWebView.setFocusable(true);
+                    mWebView.requestFocus();
+                    mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_title').enableEditing();");
+                    mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_content').enableEditing();");
+                    mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_content').focus();");
+//            showKeyboardIfEditing();
+                    updateFormatBarEnabledState(true);
+                } else {
+                    mWebView.setFocusableInTouchMode(false);
+                    mWebView.setFocusable(false);
+                    mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_title').disableEditing();");
+                    mWebView.execJavaScriptFromString("ZSSEditor.getField('zss_field_content').disableEditing();");
+//            dismissKeyboard();
+                    updateFormatBarEnabledState(false);
+                }
+            }
+        });
     }
 
     public void dismissKeyboard() {
@@ -1334,11 +1358,12 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
     }
 
     public void showKeyboardIfEditing() {
-        if(!mIsKeyboardOpen && mEditable) {
-            InputMethodManager imm = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-            imm.showSoftInput(mWebView, 0);
-            mIsKeyboardOpen = true;
-        }
+//        if(!mIsKeyboardOpen && mEditable) {
+//            InputMethodManager imm = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+//            imm.showSoftInput(mWebView, 0);
+//            mIsKeyboardOpen = true;
+//        }
+        setEditable(true);
     }
 
     private void setToolbarVisibility(final boolean visible, boolean animated) {
