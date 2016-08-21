@@ -971,7 +971,9 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
 
                 // Reset all format bar buttons (in case they remained active through activity re-creation)
                 ToggleButton htmlButton = (ToggleButton) getActivity().findViewById(R.id.format_bar_button_html);
-                htmlButton.setChecked(false);
+                if(htmlButton != null) {
+                    htmlButton.setChecked(false);
+                }
                 for (ToggleButton button : mTagToggleButtonMap.values()) {
                     button.setChecked(false);
                 }
