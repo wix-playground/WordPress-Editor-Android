@@ -206,7 +206,9 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
             }
         });
 
-        mEditorFragmentListener.onEditorFragmentInitialized();
+        if(mEditorFragmentListener != null) {
+            mEditorFragmentListener.onEditorFragmentInitialized();
+        }
 
         initJsEditor();
 
