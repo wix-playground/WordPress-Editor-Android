@@ -792,12 +792,20 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
 
     @Override
     public void setTitle(CharSequence text) {
-        mTitle = text.toString();
+        if (text == null) {
+            mTitle = "";
+        } else {
+            mTitle = text.toString();
+        }
     }
 
     @Override
     public void setContent(CharSequence text) {
-        mContentHtml = text.toString();
+        if (text == null) {
+            mContentHtml = "";
+        } else {
+            mContentHtml = text.toString();
+        }
     }
 
     /**
