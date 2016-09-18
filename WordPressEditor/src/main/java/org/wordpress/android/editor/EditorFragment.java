@@ -387,9 +387,6 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
         ToggleButton italicButton = (ToggleButton) view.findViewById(R.id.format_bar_button_italic);
         mTagToggleButtonMap.put(getString(R.string.format_bar_tag_italic), italicButton);
 
-        ToggleButton quoteButton = (ToggleButton) view.findViewById(R.id.format_bar_button_quote);
-        mTagToggleButtonMap.put(getString(R.string.format_bar_tag_blockquote), quoteButton);
-
         ToggleButton ulButton = (ToggleButton) view.findViewById(R.id.format_bar_button_ul);
         mTagToggleButtonMap.put(getString(R.string.format_bar_tag_unorderedList), ulButton);
 
@@ -1269,9 +1266,7 @@ public class EditorFragment extends EditorFragmentAbstract implements View.OnCli
             mEditorFragmentListener.onTrackableEvent(TrackableEvent.OL_BUTTON_TAPPED);
         } else if (id == R.id.format_bar_button_ul) {
             mEditorFragmentListener.onTrackableEvent(TrackableEvent.UL_BUTTON_TAPPED);
-        } else if (id == R.id.format_bar_button_quote) {
-            mEditorFragmentListener.onTrackableEvent(TrackableEvent.BLOCKQUOTE_BUTTON_TAPPED);
-        } else if (id == R.id.format_bar_button_strikethrough) {
+         } else if (id == R.id.format_bar_button_strikethrough) {
             mEditorFragmentListener.onTrackableEvent(TrackableEvent.STRIKETHROUGH_BUTTON_TAPPED);
         }
     }

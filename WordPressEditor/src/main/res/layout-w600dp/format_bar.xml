@@ -111,15 +111,6 @@
                 android:contentDescription="@string/format_bar_description_ol"
                 android:background="@drawable/format_bar_button_ol_selector"
                 android:tag="@string/format_bar_tag_orderedList"/>
-
-            <org.wordpress.android.editor.RippleToggleButton
-                android:id="@+id/format_bar_button_quote"
-                style="@style/FormatBarButtonTablet"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:contentDescription="@string/format_bar_description_quote"
-                android:background="@drawable/format_bar_button_quote_selector"
-                android:tag="@string/format_bar_tag_blockquote"/>
         </LinearLayout>
 
         <LinearLayout

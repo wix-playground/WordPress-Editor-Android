@@ -59,15 +59,6 @@
                 android:tag="@string/format_bar_tag_italic"/>
 
             <org.wordpress.android.editor.RippleToggleButton
-                android:id="@+id/format_bar_button_quote"
-                style="@style/FormatBarButton"
-                android:layout_width="wrap_content"
-                android:layout_height="fill_parent"
-                android:contentDescription="@string/format_bar_description_quote"
-                android:background="@drawable/format_bar_button_quote_selector"
-                android:tag="@string/format_bar_tag_blockquote"/>
-
-            <org.wordpress.android.editor.RippleToggleButton
                 android:id="@+id/format_bar_button_ul"
                 style="@style/FormatBarButton"
                 android:layout_width="wrap_content"
