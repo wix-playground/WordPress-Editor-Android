@@ -22,7 +22,6 @@ https://bugs.chromium.org/p/chromium/issues/detail?id=599890
 div:not(.field):not(#separatorDiv) {
     line-height: 24px;
     margin-top: 0px;
-    margin-bottom: 24px;
 }
 
 /* --- API<19 workarounds --- */
